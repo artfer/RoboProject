@@ -10,7 +10,6 @@ public class TikiTho extends AdvancedRobot {
 	boolean predictLocation=false;					//
 	double directShots=1,directShotsHit=1;			//tiros para a posição que vimos o inimigo
 	double predictiveShots=1,predictiveShotsHit=1;	//tiros para a posição para onde o inimigo se encontra a ir
-	boolean iSeeYou=false;							//just for fun
 	public void run() {
 		double width  = getBattleFieldWidth();		//tamanho do campo em pixeis
 		double height = getBattleFieldHeight();		//comprimento e largura
