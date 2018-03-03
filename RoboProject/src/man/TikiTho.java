@@ -1,4 +1,4 @@
-package robo;
+package man;
 
 import robocode.*;
 import robocode.util.Utils;
@@ -35,7 +35,7 @@ public class TikiTho extends AdvancedRobot {
 		double radarTurn = absBearing - getRadarHeadingRadians(); 						//graus a virar o radar
 		
 		if(enemyEnergy > (enemyEnergy = e.getEnergy()))							 		//vamos usar a energia do inimigo como referencia para saber se
-			direction*=-1;																//disparou e mudar de direção 180 graus a cada tiro
+			direction*=-1;																//disparou e mudar de direï¿½ï¿½o 180 graus a cada tiro
 		if(e.getDistance()<75)															//caso a distancia seja muito curta , tiro forte
 			setFire(3);
 																						
@@ -43,7 +43,7 @@ public class TikiTho extends AdvancedRobot {
 																						//o poder da bala diminui com a energia do inimigo
 		
 		double predictiveRating = predictiveShotsHit/predictiveShots;					//percentagem de acerto de tiro por estrategia escolhida
-		double directRating = directShotsHit/directShots;								//usa sempre a estratégia que tem melhor probabilidade de acerto
+		double directRating = directShotsHit/directShots;								//usa sempre a estratï¿½gia que tem melhor probabilidade de acerto
 		
 		if(predictiveRating > directRating)			//usa tiro em antecipacao ao movimento do inimigo
 			predictLocation=true;					//senao dispara directamente para a posicao em que se encontra o inimigo
@@ -74,7 +74,7 @@ public class TikiTho extends AdvancedRobot {
 	}												
 	
 	
-	public void onBulletHit(BulletHitEvent e) {		//se uma bala atingir o inimigo , incrementa as variaveis que escolhem a estratégia
+	public void onBulletHit(BulletHitEvent e) {		//se uma bala atingir o inimigo , incrementa as variaveis que escolhem a estratï¿½gia
 		if(predictLocation)							//isto vai permitir mudar a estrategia durante a batalha
 			predictiveShotsHit++;
 		else
