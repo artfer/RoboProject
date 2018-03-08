@@ -4,78 +4,80 @@ import robocode.*;
 import robocode.util.Utils;
 
 public class TikiTho extends AdvancedRobot {
-	boolean hitWall = false; 						//queremos estar a andar numa parede
-	double direction = 1;							//para permitir inverter a direcao
-	double enemyEnergy;								//energia do inimigo
+	boolean hitWall = false; 						//have we hit a wall yet
+	double direction = 1;							//-1 to go back,+1 go ahead
+	double enemyEnergy;								
 	
 	
-	boolean predictLocation=false;					//vai definir a estrategia que o robot ira usar
-	double directShots=1,directShotsHit=1;			//tiros para a posicao que vimos o inimigo
-	double predictiveShots=1,predictiveShotsHit=1;	//tiros para a posicao para onde o inimigo se encontra a ir
+	boolean predictLocation=false;					//type of shoots the robot will use
+	double directShots=1,directShotsHit=1;			//how many did the robot shoot and hit
+	double predictiveShots=1,predictiveShotsHit=1;	
 	
 	public void run() {
 		double width  = getBattleFieldWidth();		
 		double height = getBattleFieldHeight();		
 		
-		setAdjustRadarForRobotTurn(true);			//desassociar o movimento do radar dos movimentos da arma e do corpo
+		setAdjustRadarForRobotTurn(true);			//free the radar from the gun
 		setAdjustRadarForGunTurn(true);				
 		
 		while(true) {
 		if(!hitWall) {
-			turnLeft(getHeading() % 90);			//vamos virar nos perpendicularmente para uma parede e
-			ahead(Math.max(height,width)); 			//vamos usar uma parede como o nosso espaco de movimento
+			turnLeft(getHeading() % 90);			//turn to a wall
+			ahead(Math.max(height,width)); 			//and go to that wall
 		}
-			turnRadarLeft(Double.MAX_VALUE);		//roda muito o radar ate encontrar o outro robo
+			turnRadarLeft(Double.MAX_VALUE);		//spins until finds another robot
 		}
 	}
 	 
 	public void onScannedRobot(ScannedRobotEvent e) {
-		double absBearing = e.getBearingRadians() + getHeadingRadians();		      	//angulo do inimigo relativo a nossa posicao
-		double latVel = e.getVelocity() * Math.sin(e.getHeadingRadians() - absBearing); //velocidade lateral do inimigo 
-		double radarTurn = absBearing - getRadarHeadingRadians(); 						//graus a virar o radar
+		double absBearing = e.getBearingRadians() + getHeadingRadians();		      	//enymys angle relative to our position
+		double latVel = e.getVelocity() * Math.sin(e.getHeadingRadians() - absBearing); //lateral velocity of the enemy
+		double radarTurn = absBearing - getRadarHeadingRadians(); 						//angle to turn the radar
 		
-		if(enemyEnergy > (enemyEnergy = e.getEnergy()))							 		//vamos usar a energia do inimigo como referencia para saber se
-			direction*=-1;																//disparou e mudar de dire��o 180 graus a cada tiro
-		if(e.getDistance()<75)															//caso a distancia seja muito curta , tiro forte
+		if(enemyEnergy > (enemyEnergy = e.getEnergy()))							 		//if the enemys energy is lower than before
+			direction*=-1;																//he shoot,change direction
+		
+		if(e.getDistance()<75)															//if he is too close shoot a powerful bullet
 			setFire(3);
 																						
-		double bulletPower=Math.min(3, e.getEnergy()/4);								//queremos minimizar a energia que gastamos
-																						//o poder da bala diminui com a energia do inimigo
+		double bulletPower=Math.min(2, enemyEnergy/4);								//lets minimize our energy
+																						//bullet power changes with enemys energy
 		
-		double predictiveRating = predictiveShotsHit/predictiveShots;					//percentagem de acerto de tiro por estrategia escolhida
-		double directRating = directShotsHit/directShots;								//usa sempre a estrat�gia que tem melhor probabilidade de acerto
+		double predictiveRating = predictiveShotsHit/predictiveShots;					//calculate the rating of the two strategies
+		double directRating = directShotsHit/directShots;								
 		
-		if(predictiveRating > directRating)			//usa tiro em antecipacao ao movimento do inimigo
-			predictLocation=true;					//senao dispara directamente para a posicao em que se encontra o inimigo
-		else										//incrementa o contador da estrategia que esta a ser usada actualmente
-			predictLocation=false;					
-		if(predictLocation) {
+		if(predictiveRating > directRating)			//use the highest rating
+			predictLocation=true;					//shoot to the predicted location
+		else										
+			predictLocation=false;					//shoot directly at the enemy
+		if(predictLocation) {//calculate how much to turn the radar
 			setTurnGunRightRadians(Utils.normalRelativeAngle(absBearing-getGunHeadingRadians()+Math.asin(latVel/(20-3*bulletPower))));
 			predictiveShots++; 						
-		}else {										
+		}else {
 			setTurnGunRightRadians(Utils.normalRelativeAngle(absBearing-getGunHeadingRadians()));
 			directShots++;      					
 		}
-		setFire(bulletPower);
-		setAhead(100*direction);					
-		setTurnRadarRightRadians(Utils.normalRelativeAngle(radarTurn)*2); 	//mantem o radar no inimigo		 
+		setFire(bulletPower);//fire!
+		setAhead(100*direction);//dont stop moving					
+		setTurnRadarRightRadians(Utils.normalRelativeAngle(radarTurn)*2); 	//keeps the radar on target		 
 	}
 	
-	public void onHitWall(HitWallEvent e) { 		//muda a direcao quando bate na parede
-		if(hitWall)									
+	
+	public void onHitWall(HitWallEvent e) { //if we hit a wall 
+		if(hitWall)//change direction									
 			direction*=-1;							
-		else 
+		else //if its the first time we hit a wall , just turn left
 			turnLeft(90);							
 		hitWall=true;		
 	}
 	
-	public void onHitRobot(HitRobotEvent e) {		//queremos evitar dano desnecesario, mudar de direcao
+	public void onHitRobot(HitRobotEvent e) {		//if we hit another robot, go the other way
 		direction*=-1;								
 	}												
 	
 	
-	public void onBulletHit(BulletHitEvent e) {		//se uma bala atingir o inimigo , incrementa as variaveis que escolhem a estrat�gia
-		if(predictLocation)							//isto vai permitir mudar a estrategia durante a batalha
+	public void onBulletHit(BulletHitEvent e) {		//if we hit the enemy with a bullet
+		if(predictLocation)							//increment the "hit" variables
 			predictiveShotsHit++;
 		else
 			directShotsHit++;
